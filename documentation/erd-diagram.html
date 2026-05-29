@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database ERD Diagram - Sekolah Agama Ayer Hitam</title>
+    <style>
+        :root {
+            --bg-primary: #0b0f19;
+            --bg-secondary: #131b2e;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-blue: #3b82f6;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #0d1527 100%);
+            color: var(--text-primary);
+            font-family: var(--font-family);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, #60a5fa, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+
+        .btn-print {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+            transition: all 0.3s ease;
+            margin-bottom: 24px;
+        }
+
+        .btn-print:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45);
+        }
+
+        @media print {
+            .btn-print { display: none; }
+            body { background: white; color: black; }
+            .card { background: white; border: none; box-shadow: none; padding: 0; }
+        }
+    </style>
+    <!-- Mermaid.js ESM loading -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ 
+            startOnLoad: true, 
+            theme: 'dark',
+            themeVariables: {
+                background: '#1e293b',
+                primaryColor: '#3b82f6',
+                primaryTextColor: '#fff',
+                lineColor: '#64748b'
+            }
+        });
+    </script>
+</head>
+<body>
+
+    <div class="container animate-fade-in">
+        <div class="header">
+            <h1>Database Entity Relationship Diagram</h1>
+            <p>Relational SQLite schema detailing tables, data types, constraints, and relational boundaries for Sekolah Agama Ayer Hitam Portal.</p>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 24px;">
+            <button class="btn-print" onclick="window.print()">
+                Print / Save PDF Diagram
+            </button>
+        </div>
+
+        <div class="card">
+            <div class="mermaid">
+erDiagram
+    users {
+        INTEGER id PK
+        TEXT username
+        TEXT password_hash
+        TEXT role
+    }
+
+    classes {
+        INTEGER id PK
+        TEXT class_name
+    }
+
+    students {
+        INTEGER id PK
+        TEXT name
+        TEXT demographic_details
+        INTEGER class_id FK
+        INTEGER parent_id FK
+    }
+
+    attendance {
+        INTEGER id PK
+        INTEGER student_id FK
+        INTEGER class_id FK
+        TEXT date
+        TEXT status
+        TIMESTAMP updated_at
+    }
+
+    results {
+        INTEGER id PK
+        INTEGER student_id FK
+        TEXT subject_name
+        REAL marks
+        TEXT grade
+        REAL average
+        TEXT exam_period
+    }
+
+    academic_schedules {
+        INTEGER id PK
+        TEXT task_name
+        TEXT due_date
+    }
+
+    classes ||--o{ students : "hosts"
+    users ||--o{ students : "parents"
+    students ||--o{ attendance : "logs"
+    classes ||--o{ attendance : "monitors"
+    students ||--o{ results : "achieves"
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

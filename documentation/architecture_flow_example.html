@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture Flow</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        h1, h2, h3 { color: #2c3e50; }
+        code { background: #f4f4f4; padding: 2px 5px; border-radius: 4px; font-family: monospace; }
+        .mermaid { text-align: center; margin: 2rem 0; }
+        @media print {
+            body { padding: 0; }
+            .page-break { page-break-before: always; }
+        }
+    </style>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</head>
+<body>
+
+    <h1>Request Data Flow</h1>
+    <p>This document outlines the complete lifecycle of a single user request, from the moment they click "Send" in the browser to the moment the final data table is rendered on their screen.</p>
+
+    <h2>Sequence Diagram</h2>
+    <p>Here is a visual representation of how the React Frontend, FastAPI Backend, Local LLM, and SQLite database interact with each other.</p>
+
+    <div class="mermaid">
+sequenceDiagram
+    actor User
+    participant React Frontend
+    participant FastAPI Backend
+    participant Ollama (LLM)
+    participant SQLite Database
+
+    User->>React Frontend: Types natural language query & hits "Send"
+    
+    activate React Frontend
+    React Frontend-->>User: Displays User Message & "Thinking..." animation
+    React Frontend->>FastAPI Backend: POST /chat { message: "..." }
+    activate FastAPI Backend
+    
+    FastAPI Backend->>SQLite Database: Read schema (tables/columns)
+    SQLite Database-->>FastAPI Backend: Schema definitions
+    
+    FastAPI Backend->>Ollama (LLM): prompt: Schema + User Message
+    activate Ollama (LLM)
+    Note right of Ollama (LLM): Model (llama3.2:3b) translates<br/>natural language to SQL
+    Ollama (LLM)-->>FastAPI Backend: Returns raw SQL query
+    deactivate Ollama (LLM)
+    
+    Note right of FastAPI Backend: sqlglot validates SQL:<br/>1. Enforces SELECT only<br/>2. Injects LIMIT 200
+    
+    FastAPI Backend->>SQLite Database: Executes validated SQL query
+    activate SQLite Database
+    SQLite Database-->>FastAPI Backend: Returns data rows
+    deactivate SQLite Database
+    
+    FastAPI Backend-->>React Frontend: JSON { ok, rows, columns, sql_executed }
+    deactivate FastAPI Backend
+    
+    React Frontend-->>User: Renders text response and DataTable or Chart UI
+    deactivate React Frontend
+    </div>
+
+    <h2>Step-by-Step Breakdown</h2>
+
+    <h3>1. The Trigger (Frontend)</h3>
+    <ul>
+        <li><strong>User Action:</strong> The user types a question like "Show me the top 5 products" in the <code>&lt;ChatInput&gt;</code> component and presses Enter.</li>
+        <li><strong>State Update:</strong> React immediately adds the user's message to the chat window so they can see what they just typed, and displays a "Thinking..." indicator.</li>
+    </ul>
+
+    <h3>2. The Network Request (Frontend &rarr; Backend)</h3>
+    <ul>
+        <li><strong>Fetch API:</strong> The <code>handleSubmit</code> function in <code>chat.tsx</code> sends a <code>POST</code> request to <code>http://localhost:8000/chat</code> containing the user's text message.</li>
+    </ul>
+
+    <h3>3. Gathering Context (Backend)</h3>
+    <ul>
+        <li><strong>Schema Extraction:</strong> The FastAPI backend (<code>main.py</code>) receives the request. Before asking the AI anything, it connects to the <code>mfg_ops.db</code> SQLite database and extracts the current schema (table names and column definitions). This provides the AI with the context it needs to write an accurate query.</li>
+    </ul>
+
+    <div class="page-break"></div>
+
+    <h3>4. AI Translation (Backend &rarr; Ollama)</h3>
+    <ul>
+        <li><strong>Prompt Engineering:</strong> FastAPI constructs a prompt combining a system instruction (acting as a SQLite assistant), the database schema, and the user's question.</li>
+        <li><strong>Inference:</strong> This prompt is sent to the local <code>llama3.2:3b</code> model running via Ollama. The model translates the English request into a raw SQL query.</li>
+    </ul>
+
+    <h3>5. Security & Validation (Backend)</h3>
+    <ul>
+        <li><strong>AST Parsing:</strong> Before running the SQL, the backend uses a library called <code>sqlglot</code> to parse the AI's output.</li>
+        <li><strong>Safety Checks:</strong> It verifies that the query is strictly a <code>SELECT</code> statement (blocking destructive <code>DROP</code>, <code>UPDATE</code>, or <code>DELETE</code> commands).</li>
+        <li><strong>Rate Limiting:</strong> It forcefully applies a <code>LIMIT 200</code> to the query to ensure the database isn't overwhelmed by massive data requests.</li>
+    </ul>
+
+    <h3>6. Database Execution (Backend &rarr; SQLite)</h3>
+    <ul>
+        <li><strong>Querying:</strong> The backend executes the sanitized, safe SQL query against the SQLite database and retrieves the rows of data.</li>
+    </ul>
+
+    <h3>7. The Response (Backend &rarr; Frontend)</h3>
+    <ul>
+        <li><strong>JSON Payload:</strong> The backend formats the data and sends it back to React as a JSON response. The payload includes:
+            <ul>
+                <li><code>ok</code>: A success flag.</li>
+                <li><code>sql_executed</code>: The exact SQL string that was run.</li>
+                <li><code>columns</code>: The column headers for the data table.</li>
+                <li><code>rows</code>: The actual database records.</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h3>8. Rendering the Result (Frontend)</h3>
+    <ul>
+        <li><strong>State Update:</strong> React receives the JSON and adds a new "assistant" message to the <code>messages</code> array in state, embedding the raw data inside the message object.</li>
+        <li><strong>Component Rendering:</strong> The <code>&lt;PreviewMessage&gt;</code> component reads this data. It prints out the SQL query that was used, and uses a custom <code>&lt;DataTable&gt;</code> component to dynamically render the rows and columns into a clean, readable table, or a dynamic Bar Chart based on the context, on the user's screen.</li>
+    </ul>
+
+</body>
+</html>
