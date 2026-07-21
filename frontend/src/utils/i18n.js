@@ -18,7 +18,7 @@ export const translations = {
 
     // Sidebar Tabs
     dashboard: "Papan Pemuka",
-    manageStudents: "Urus Pelajar",
+    manageStudents: "Urus Pengguna",
     manageClasses: "Urus Kelas",
     markAttendance: "Tanda Kehadiran",
     academicResults: "Keputusan Akademik",
@@ -37,16 +37,16 @@ export const translations = {
     todayStats: "Kadar kehadiran mewakili rekod hari ini. Tanda kehadiran setiap hari.",
     quickOperations: "Operasi Pantas",
     quickOpsDesc: "Pilih tugasan portal khusus yang dipetakan untuk peranan anda.",
-    registerManageStudents: "Daftar & Urus Pelajar",
+    registerManageStudents: "Daftar & Urus Pengguna",
     configureSchoolClasses: "Konfigurasi Kelas Sekolah",
     takeClassroomAttendance: "Ambil Kehadiran Kelas",
     submitExamGrades: "Hantar Gred Peperiksaan",
     viewAcademicSchedules: "Lihat Jadual Akademik",
 
     // Manage Students
-    studentAdmin: "Pentadbiran Pelajar",
+    studentAdmin: "Pentadbiran Pengguna",
     studentAdminDesc: "Daftar, edit dan tetapkan pelajar ke bilik darjah dan akaun ibu bapa.",
-    registerStudent: "Daftar Pelajar Baru",
+    registerStudent: "Daftar Pengguna Baru",
     fullName: "Nama Penuh",
     demographics: "Butiran Demografi & Hubungan",
     demographicsPlaceholder: "Umur: 16, Jantina: Lelaki, Hubungan: +12345678",
@@ -172,7 +172,7 @@ export const translations = {
 
     // Sidebar Tabs
     dashboard: "Dashboard",
-    manageStudents: "Manage Students",
+    manageStudents: "Manage Users",
     manageClasses: "Manage Classes",
     markAttendance: "Mark Attendance",
     academicResults: "Academic Results",
@@ -191,16 +191,16 @@ export const translations = {
     todayStats: "Present rate represents logs for today. Mark attendance daily.",
     quickOperations: "Quick Operations",
     quickOpsDesc: "Jump to specific portal tasks mapped for your role.",
-    registerManageStudents: "Register & Manage Students",
+    registerManageStudents: "Register & Manage Users",
     configureSchoolClasses: "Configure School Classes",
     takeClassroomAttendance: "Take Classroom Attendance",
     submitExamGrades: "Submit Exam Grades",
     viewAcademicSchedules: "View Academic Schedules",
 
     // Manage Students
-    studentAdmin: "Student Administration",
+    studentAdmin: "User Administration",
     studentAdminDesc: "Create, edit, and assign students to classrooms and parent accounts.",
-    registerStudent: "Register Student",
+    registerStudent: "Register User",
     fullName: "Full Name",
     demographics: "Demographic & Contact Details",
     demographicsPlaceholder: "Age: 16, Gender: Male, Contact: +12345678",

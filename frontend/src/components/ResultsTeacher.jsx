@@ -35,7 +35,7 @@ export default function ResultsTeacher({ token, t }) {
 
   const fetchClasses = async () => {
     try {
-      const res = await fetch('/api/classes', {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || '') + '/api/classes', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -50,7 +50,7 @@ export default function ResultsTeacher({ token, t }) {
 
   const fetchClassStudents = async (classId) => {
     try {
-      const res = await fetch(`/api/classes/${classId}/students`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/classes/${classId}/students`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -65,7 +65,7 @@ export default function ResultsTeacher({ token, t }) {
 
   const fetchRankings = async () => {
     try {
-      const res = await fetch('/api/results/performance-ranking', {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || '') + '/api/results/performance-ranking', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -79,7 +79,7 @@ export default function ResultsTeacher({ token, t }) {
 
   const fetchGradeDistribution = async () => {
     try {
-      const res = await fetch('/api/results/grade-distribution', {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || '') + '/api/results/grade-distribution', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -102,7 +102,7 @@ export default function ResultsTeacher({ token, t }) {
     }
 
     try {
-      const res = await fetch('/api/results', {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || '') + '/api/results', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

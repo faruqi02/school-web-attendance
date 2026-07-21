@@ -31,7 +31,7 @@ export default function AttendanceTeacher({ token, t }) {
 
   const fetchClasses = async () => {
     try {
-      const res = await fetch('/api/classes', {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || '') + '/api/classes', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -49,7 +49,7 @@ export default function AttendanceTeacher({ token, t }) {
     setSuccess('');
     try {
       // 1. Fetch Students
-      const studentRes = await fetch(`/api/classes/${selectedClassId}/students`, {
+      const studentRes = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/classes/${selectedClassId}/students`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!studentRes.ok) throw new Error("Failed to load class students");
@@ -57,7 +57,7 @@ export default function AttendanceTeacher({ token, t }) {
       setStudents(studentData);
 
       // 2. Fetch existing logs for class/date
-      const attRes = await fetch(`/api/attendance/class/${selectedClassId}/date/${date}`, {
+      const attRes = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/attendance/class/${selectedClassId}/date/${date}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (attRes.ok) {
@@ -102,7 +102,7 @@ export default function AttendanceTeacher({ token, t }) {
     }
 
     try {
-      const res = await fetch('/api/attendance', {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || '') + '/api/attendance', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -133,7 +133,7 @@ export default function AttendanceTeacher({ token, t }) {
     setGeneratingReport(true);
     setMonthlyLogs([]);
     try {
-      const res = await fetch(`/api/attendance/report/class/${selectedClassId}/month/${reportMonth}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/attendance/report/class/${selectedClassId}/month/${reportMonth}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {

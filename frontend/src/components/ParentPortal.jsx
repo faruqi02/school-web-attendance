@@ -14,7 +14,7 @@ export default function ParentPortal({ token, t }) {
 
   const fetchChildData = async () => {
     try {
-      const res = await fetch('/api/parent/child', {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || '') + '/api/parent/child', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const resData = await res.json();

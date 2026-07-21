@@ -26,7 +26,7 @@ export default function Dashboard({ token, role, setActiveTab, t }) {
   const fetchStats = async () => {
     try {
       // Fetch stats
-      const statsRes = await fetch('/api/dashboard/stats', {
+      const statsRes = await fetch((import.meta.env.VITE_API_BASE_URL || '') + '/api/dashboard/stats', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (statsRes.ok) {
@@ -35,7 +35,7 @@ export default function Dashboard({ token, role, setActiveTab, t }) {
       }
 
       // Fetch schedule tasks count
-      const schedRes = await fetch('/api/schedule', {
+      const schedRes = await fetch((import.meta.env.VITE_API_BASE_URL || '') + '/api/schedule', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (schedRes.ok) {

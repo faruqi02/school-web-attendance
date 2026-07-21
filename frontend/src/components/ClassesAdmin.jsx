@@ -24,7 +24,7 @@ export default function ClassesAdmin({ token, t }) {
 
   const fetchClasses = async () => {
     try {
-      const res = await fetch('/api/classes', {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || '') + '/api/classes', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -38,7 +38,7 @@ export default function ClassesAdmin({ token, t }) {
 
   const fetchClassStudents = async (classId) => {
     try {
-      const res = await fetch(`/api/classes/${classId}/students`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/classes/${classId}/students`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -56,7 +56,7 @@ export default function ClassesAdmin({ token, t }) {
     setSuccess('');
 
     try {
-      const res = await fetch('/api/classes', {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || '') + '/api/classes', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

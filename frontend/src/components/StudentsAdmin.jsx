@@ -30,7 +30,7 @@ export default function StudentsAdmin({ token, t }) {
 
   const fetchStudents = async () => {
     try {
-      const res = await fetch('/api/students', {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || '') + '/api/students', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -44,7 +44,7 @@ export default function StudentsAdmin({ token, t }) {
 
   const fetchClasses = async () => {
     try {
-      const res = await fetch('/api/classes', {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || '') + '/api/classes', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -58,7 +58,7 @@ export default function StudentsAdmin({ token, t }) {
 
   const fetchParents = async () => {
     try {
-      const res = await fetch('/api/auth/users', {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || '') + '/api/auth/users', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -77,7 +77,7 @@ export default function StudentsAdmin({ token, t }) {
     setSuccess('');
 
     try {
-      const res = await fetch('/api/students', {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || '') + '/api/students', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -113,7 +113,7 @@ export default function StudentsAdmin({ token, t }) {
     setSuccess('');
 
     try {
-      const res = await fetch(`/api/students/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/students/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -143,7 +143,7 @@ export default function StudentsAdmin({ token, t }) {
     setSuccess('');
 
     try {
-      const res = await fetch(`/api/students/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/students/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -170,6 +170,23 @@ export default function StudentsAdmin({ token, t }) {
     }
   };
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterClassId, setFilterClassId] = useState('');
+  const [showForm, setShowForm] = useState(false);
+
+  const filteredStudents = students.filter(student => {
+    const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesClass = filterClassId ? String(student.class_id) === String(filterClassId) : true;
+    return matchesSearch && matchesClass;
+  });
+
+  const handleCreateAndClose = async (e) => {
+    await handleCreate(e);
+    if (!error) {
+      setShowForm(false);
+    }
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
       <div>
@@ -193,75 +210,131 @@ export default function StudentsAdmin({ token, t }) {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '32px' }}>
-        {/* Left Side: Create Student */}
-        <div className="glass-card" style={{ height: 'fit-content' }}>
-          <h3 style={{ fontSize: '18px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Plus size={18} style={{ color: '#3b82f6' }} />
-            {t('registerStudent')}
-          </h3>
-          
-          <form onSubmit={handleCreate}>
-            <div className="form-group">
-              <label className="form-label">{t('fullName')}</label>
+      {/* Modal for Create Student */}
+      {showForm && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '24px'
+        }}>
+          <div className="glass-card animate-fade-in" style={{ width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                <Plus size={18} style={{ color: '#3b82f6' }} />
+                {t('registerStudent')}
+              </h3>
+              <button onClick={() => setShowForm(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px' }}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleCreateAndClose}>
+              <div className="form-group">
+                <label className="form-label">{t('fullName')}</label>
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  placeholder="Ahmad Ibrahim" 
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)} 
+                  required 
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">{t('demographics')}</label>
+                <textarea 
+                  className="form-textarea" 
+                  rows="2"
+                  placeholder={t('demographicsPlaceholder')} 
+                  value={demographics} 
+                  onChange={(e) => setDemographics(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">{t('assignedClass')}</label>
+                <select 
+                  className="form-select" 
+                  value={classId} 
+                  onChange={(e) => setClassId(e.target.value)}
+                >
+                  <option value="">{t('noClass')}</option>
+                  {classes.map(cls => (
+                    <option key={cls.id} value={cls.id}>{cls.class_name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">{t('assignedParent')}</label>
+                <select 
+                  className="form-select" 
+                  value={parentId} 
+                  onChange={(e) => setParentId(e.target.value)}
+                >
+                  <option value="">{t('noParent')}</option>
+                  {parents.map(p => (
+                    <option key={p.id} value={p.id}>{p.username}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+                <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary" style={{ flex: 1, padding: '12px' }}>
+                  {t('cancel') || 'Batal'}
+                </button>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '12px' }}>
+                  {t('registerStudent')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+        {/* Student Directory Full Width */}
+        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+            <h3 style={{ fontSize: '18px', margin: 0 }}>{t('rosterDirectory')} ({filteredStudents.length})</h3>
+            
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
               <input 
                 type="text" 
                 className="form-input" 
-                placeholder="Ahmad Ibrahim" 
-                value={name} 
-                onChange={(e) => setName(e.target.value)} 
-                required 
+                placeholder={t('search') || 'Search students...'} 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{ padding: '8px 12px', minWidth: '200px' }}
               />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">{t('demographics')}</label>
-              <textarea 
-                className="form-textarea" 
-                rows="2"
-                placeholder={t('demographicsPlaceholder')} 
-                value={demographics} 
-                onChange={(e) => setDemographics(e.target.value)}
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">{t('assignedClass')}</label>
               <select 
                 className="form-select" 
-                value={classId} 
-                onChange={(e) => setClassId(e.target.value)}
+                value={filterClassId} 
+                onChange={(e) => setFilterClassId(e.target.value)}
+                style={{ padding: '8px 12px', minWidth: '150px' }}
               >
-                <option value="">{t('noClass')}</option>
+                <option value="">{t('allClasses') || 'All Classes'}</option>
                 {classes.map(cls => (
                   <option key={cls.id} value={cls.id}>{cls.class_name}</option>
                 ))}
               </select>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">{t('assignedParent')}</label>
-              <select 
-                className="form-select" 
-                value={parentId} 
-                onChange={(e) => setParentId(e.target.value)}
+              <button 
+                onClick={() => setShowForm(true)}
+                className="btn btn-primary"
+                style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px', height: '100%' }}
               >
-                <option value="">{t('noParent')}</option>
-                {parents.map(p => (
-                  <option key={p.id} value={p.id}>{p.username}</option>
-                ))}
-              </select>
+                <Plus size={16} />
+                Daftar Pelajar Baru
+              </button>
             </div>
-
-            <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '12px' }}>
-              {t('registerStudent')}
-            </button>
-          </form>
-        </div>
-
-        {/* Right Side: Student Directory */}
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <h3 style={{ fontSize: '18px' }}>{t('rosterDirectory')} ({students.length})</h3>
+          </div>
           
           <div className="table-container">
             <table className="premium-table">
@@ -273,7 +346,7 @@ export default function StudentsAdmin({ token, t }) {
                 </tr>
               </thead>
               <tbody>
-                {students.map(student => (
+                {filteredStudents.map(student => (
                   <tr key={student.id}>
                     <td>
                       {editId === student.id ? (
@@ -362,7 +435,7 @@ export default function StudentsAdmin({ token, t }) {
                     </td>
                   </tr>
                 ))}
-                {students.length === 0 && (
+                {filteredStudents.length === 0 && (
                   <tr>
                     <td colSpan="3" style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '24px' }}>
                       {t('noRecords')}

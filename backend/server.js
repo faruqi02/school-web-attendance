@@ -110,23 +110,45 @@ app.post('/api/auth/login', (req, res) => {
   });
 });
 
-// Admin User Management: List all accounts (Parents & Teachers)
+// Admin User Management: List all accounts (Administrators, Parents & Teachers)
 app.get('/api/auth/users', authenticateToken, requireRole(['Administrator']), (req, res) => {
-  db.all("SELECT id, username, role FROM users WHERE role IN ('Teacher', 'Parent')", [], (err, rows) => {
+  db.all("SELECT id, username, role FROM users", [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
   });
 });
 
-// Admin User Management: Update account
+// Admin User Management: Update account (Password or Role)
 app.put('/api/auth/users/:id', authenticateToken, requireRole(['Administrator']), (req, res) => {
-  const { password } = req.body;
-  if (!password) return res.status(400).json({ error: 'Password is required to reset' });
-  const hash = bcrypt.hashSync(password, 10);
+  const { password, role } = req.body;
+  if (!password && !role) return res.status(400).json({ error: 'Password or role is required to update' });
 
-  db.run("UPDATE users SET password_hash = ? WHERE id = ?", [hash, req.params.id], function(err) {
+  if (password) {
+    const hash = bcrypt.hashSync(password, 10);
+    if (role) {
+      db.run("UPDATE users SET password_hash = ?, role = ? WHERE id = ?", [hash, role, req.params.id], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: 'User updated successfully.' });
+      });
+    } else {
+      db.run("UPDATE users SET password_hash = ? WHERE id = ?", [hash, req.params.id], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: 'User password updated successfully.' });
+      });
+    }
+  } else if (role) {
+    db.run("UPDATE users SET role = ? WHERE id = ?", [role, req.params.id], function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ message: 'User role updated successfully.' });
+    });
+  }
+});
+
+// Admin User Management: Delete account
+app.delete('/api/auth/users/:id', authenticateToken, requireRole(['Administrator']), (req, res) => {
+  db.run("DELETE FROM users WHERE id = ?", [req.params.id], function(err) {
     if (err) return res.status(500).json({ error: err.message });
-    res.json({ message: 'User password updated successfully.' });
+    res.json({ message: 'User deleted successfully.' });
   });
 });
 

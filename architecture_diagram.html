@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS Architecture Diagram</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f4f4f9;
+        }
+        .mermaid {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        @media print {
+            body {
+                background-color: white;
+            }
+            .mermaid {
+                box-shadow: none;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="mermaid">
+        graph TD
+            A["[ TRAFIK INTERNET / PENGGUNA ]"] --> B["AWS Route 53 (DNS)"]
+            B --> C["AWS WAF (Firewall)"]
+            C --> D["Amazon CloudFront CDN"]
+            
+            D --> E["[ KANDUNGAN STATIK / MEDIA ]"]
+            D --> F["[ TRAFIK DINAMIK / APLIKASI ]"]
+            
+            E --> G["Amazon S3 Bucket"]
+            
+            F --> H["Application Load Balancer"]
+            
+            H --> I
+            H --> J
+            
+            subgraph I ["Availability Zone A<br/>[ Auto-Scaling Group ]"]
+                IB["Web/App Instance"]
+            end
+            
+            subgraph J ["Availability Zone B<br/>[ Auto-Scaling Group ]"]
+                JB["Web/App Instance"]
+            end
+            
+            IB --> K["Amazon RDS Multi-AZ Database<br/>(Master) &lt;--&gt; (Read Replica)"]
+            JB --> K
+            
+            %% Styling to mimic the original diagram's look
+            style A fill:transparent,stroke:transparent
+            style E fill:transparent,stroke:transparent
+            style F fill:transparent,stroke:transparent
+            style I fill:transparent,stroke-dasharray: 5 5,stroke:#333
+            style J fill:transparent,stroke-dasharray: 5 5,stroke:#333
+            style K stroke-dasharray: 5 5
+    </div>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</body>
+</html>

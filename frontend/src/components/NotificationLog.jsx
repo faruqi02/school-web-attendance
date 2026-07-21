@@ -15,7 +15,7 @@ export default function NotificationLog({ token, t }) {
 
   const fetchLogs = async () => {
     try {
-      const res = await fetch('/api/notifications/log', {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || '') + '/api/notifications/log', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {

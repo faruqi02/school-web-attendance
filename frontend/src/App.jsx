@@ -103,7 +103,7 @@ export default function App() {
       case 'dashboard':
         return <Dashboard token={token} role={role} setActiveTab={setActiveTab} t={t} />;
       case 'students':
-        if (role === 'Administrator') return <StudentsAdmin token={token} t={t} />;
+        if (role === 'Administrator' || role === 'Teacher') return <StudentsAdmin token={token} t={t} />;
         return <p className="text-secondary">{t('unauthorized')}</p>;
       case 'classes':
         if (role === 'Administrator') return <ClassesAdmin token={token} t={t} />;

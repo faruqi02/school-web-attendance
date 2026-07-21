@@ -20,7 +20,7 @@ export default function AcademicSchedule({ token, role, t }) {
 
   const fetchTasks = async () => {
     try {
-      const res = await fetch('/api/schedule', {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || '') + '/api/schedule', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -38,7 +38,7 @@ export default function AcademicSchedule({ token, role, t }) {
     setSuccess('');
 
     try {
-      const res = await fetch('/api/schedule', {
+      const res = await fetch((import.meta.env.VITE_API_BASE_URL || '') + '/api/schedule', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -67,7 +67,7 @@ export default function AcademicSchedule({ token, role, t }) {
     setSuccess('');
 
     try {
-      const res = await fetch(`/api/schedule/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/schedule/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -95,7 +95,7 @@ export default function AcademicSchedule({ token, role, t }) {
     setSuccess('');
 
     try {
-      const res = await fetch(`/api/schedule/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/schedule/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
