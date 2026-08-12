@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2, Check, X, ShieldAlert } from 'lucide-react';
+import FloatingAlert from './FloatingAlert';
 
 export default function StudentsAdmin({ token, t }) {
   const [students, setStudents] = useState([]);
@@ -188,7 +189,7 @@ export default function StudentsAdmin({ token, t }) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', position: 'relative' }}>
       <div>
         <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px' }}>
           {t('studentAdmin')}
@@ -198,17 +199,8 @@ export default function StudentsAdmin({ token, t }) {
         </p>
       </div>
 
-      {error && (
-        <div className="glass-card" style={{ borderLeft: '4px solid var(--color-absent)', color: 'var(--color-absent)' }}>
-          {error}
-        </div>
-      )}
-
-      {success && (
-        <div className="glass-card" style={{ borderLeft: '4px solid var(--color-present)', color: 'var(--color-present)' }}>
-          {success}
-        </div>
-      )}
+      <FloatingAlert message={error} type="error" onClose={() => setError('')} />
+      <FloatingAlert message={success} type="success" onClose={() => setSuccess('')} />
 
       {/* Modal for Create Student */}
       {showForm && (

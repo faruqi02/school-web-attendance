@@ -158,7 +158,7 @@ export default function App() {
               transition: 'var(--transition)'
             }}
           >
-            Bahasa Melayu
+            BM
           </button>
           <button 
             onClick={() => setLang('en')} 
@@ -174,7 +174,7 @@ export default function App() {
               transition: 'var(--transition)'
             }}
           >
-            English
+            ENG
           </button>
         </div>
 
