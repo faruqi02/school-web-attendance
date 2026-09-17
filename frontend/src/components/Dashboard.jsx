@@ -26,16 +26,16 @@ export default function Dashboard({ token, role, setActiveTab, t }) {
   const fetchStats = async () => {
     try {
       // Fetch stats
-      const statsRes = await fetch('/api/dashboard_stats.php', {
+      const statsRes = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/dashboard_stats.php`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      const statsData = await statsRes.json();
       if (statsRes.ok) {
-        const statsData = await statsRes.json();
         setStats(statsData);
       }
 
       // Fetch schedule tasks count
-      const schedRes = await fetch('/api/schedule.php', {
+      const schedRes = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/schedule.php`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (schedRes.ok) {

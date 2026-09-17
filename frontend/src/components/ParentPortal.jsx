@@ -12,37 +12,36 @@ export default function ParentPortal({ token, t }) {
   const [selectedYear, setSelectedYear] = useState('');
 
   useEffect(() => {
-    fetchYears();
+    fetchAcademicYears();
   }, []);
 
   useEffect(() => {
     if (selectedYear) {
-      fetchChildData(selectedYear);
+      fetchStudentInfo(selectedYear);
     }
   }, [selectedYear]);
 
-  const fetchYears = async () => {
+  const fetchAcademicYears = async () => {
     try {
-      const res = await fetch('/api/academic_years.php', {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/academic_years.php`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      const years = await res.json();
-      setAcademicYears(years);
-      if (years.length > 0) {
-        setSelectedYear(years[0].id); // Default to most recent year
-      } else {
-        setLoading(false);
+      const data = await res.json();
+      if (res.ok) {
+        setAcademicYears(data);
+        if (data.length > 0) {
+          const defaultYear = data.find(y => y.is_current === 1) || data[0];
+          setSelectedYear(defaultYear.id);
+        }
       }
     } catch (err) {
-      setError('Failed to fetch academic years.');
-      setLoading(false);
+      console.error(err);
     }
   };
 
-  const fetchChildData = async (yearId) => {
-    setLoading(true);
+  const fetchStudentInfo = async (yearId) => {
     try {
-      const res = await fetch(`/api/parent_child.php?academic_year_id=${yearId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/parent_child.php?academic_year_id=${yearId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const resData = await res.json();

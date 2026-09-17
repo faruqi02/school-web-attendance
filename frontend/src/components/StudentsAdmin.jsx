@@ -31,34 +31,39 @@ export default function StudentsAdmin({ token, t }) {
   const fetchYearsAndClasses = async () => {
     try {
       const [yearRes, classRes] = await Promise.all([
-        fetch('/api/academic_years.php', { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch('/api/classes.php', { headers: { 'Authorization': `Bearer ${token}` } })
+        fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/academic_years.php`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/classes.php`, { headers: { 'Authorization': `Bearer ${token}` } })
       ]);
-      const years = await yearRes.json();
-      const cls = await classRes.json();
+      const [yearData, classData] = await Promise.all([
+        yearRes.json(),
+        classRes.json()
+      ]);
       
-      setAcademicYears(years);
-      setClasses(cls);
+      if (!yearRes.ok) throw new Error(yearData.error || 'Failed to fetch academic years');
+      if (!classRes.ok) throw new Error(classData.error || 'Failed to fetch classes');
       
-      if (years.length > 0) {
-        setSelectedYear(years[0].id);
+      setAcademicYears(yearData);
+      setClasses(classData);
+      
+      if (yearData.length > 0) {
+        const defaultYear = yearData.find(y => y.is_current === 1) || yearData[0];
+        setSelectedYear(defaultYear.id);
       }
     } catch (err) {
-      console.error(err);
+      setError(err.message);
     }
   };
 
   const fetchStudents = async (yearId) => {
     try {
-      const res = await fetch(`/api/students.php?academic_year_id=${yearId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/students.php?academic_year_id=${yearId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (res.ok) {
-        const data = await res.json();
-        setStudents(data);
-      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setStudents(data);
     } catch (err) {
-      console.error(err);
+      setError(err.message);
     }
   };
 
@@ -73,7 +78,7 @@ export default function StudentsAdmin({ token, t }) {
     }
 
     try {
-      const res = await fetch('/api/students.php', {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/students.php`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

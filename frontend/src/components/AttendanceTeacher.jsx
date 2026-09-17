@@ -31,8 +31,8 @@ export default function AttendanceTeacher({ token, t }) {
   const fetchYearsAndClasses = async () => {
     try {
       const [yearRes, classRes] = await Promise.all([
-        fetch('/api/academic_years.php', { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch('/api/classes.php', { headers: { 'Authorization': `Bearer ${token}` } })
+        fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/academic_years.php`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/classes.php`, { headers: { 'Authorization': `Bearer ${token}` } })
       ]);
       const years = await yearRes.json();
       const cls = await classRes.json();
@@ -50,7 +50,7 @@ export default function AttendanceTeacher({ token, t }) {
   const fetchStudentsAndAttendance = async () => {
     try {
       // Fetch students for this class and year
-      const stRes = await fetch(`/api/students.php?academic_year_id=${selectedYear}`, {
+      const stRes = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/students.php?academic_year_id=${selectedYear}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const allStudents = await stRes.json();
@@ -58,7 +58,7 @@ export default function AttendanceTeacher({ token, t }) {
       setStudents(classStudents);
 
       // Fetch attendance for this class, year, and date
-      const attRes = await fetch(`/api/attendance.php?academic_year_id=${selectedYear}&class_id=${selectedClass}&date=${selectedDate}`, {
+      const attRes = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/attendance.php?academic_year_id=${selectedYear}&class_id=${selectedClass}&date=${selectedDate}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const attData = await attRes.json();
@@ -100,7 +100,7 @@ export default function AttendanceTeacher({ token, t }) {
     }
 
     try {
-      const res = await fetch('/api/attendance.php', {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/attendance.php`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

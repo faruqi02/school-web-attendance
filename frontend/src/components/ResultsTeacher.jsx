@@ -41,8 +41,8 @@ export default function ResultsTeacher({ token, t }) {
   const fetchYearsAndClasses = async () => {
     try {
       const [yearRes, classRes] = await Promise.all([
-        fetch('/api/academic_years.php', { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch('/api/classes.php', { headers: { 'Authorization': `Bearer ${token}` } })
+        fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/academic_years.php`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/classes.php`, { headers: { 'Authorization': `Bearer ${token}` } })
       ]);
       const years = await yearRes.json();
       const cls = await classRes.json();
@@ -59,7 +59,7 @@ export default function ResultsTeacher({ token, t }) {
 
   const fetchStudents = async () => {
     try {
-      const res = await fetch(`/api/students.php?academic_year_id=${selectedYear}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/students.php?academic_year_id=${selectedYear}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const allStudents = await res.json();
@@ -73,7 +73,7 @@ export default function ResultsTeacher({ token, t }) {
 
   const fetchAllResults = async () => {
     try {
-      const res = await fetch(`/api/results.php?academic_year_id=${selectedYear}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/results.php?academic_year_id=${selectedYear}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -98,7 +98,7 @@ export default function ResultsTeacher({ token, t }) {
     setSuccess('');
 
     try {
-      const res = await fetch('/api/results.php', {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/results.php`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

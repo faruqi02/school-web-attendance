@@ -84,11 +84,13 @@ export default function App() {
     let endpoint = '';
     let payload = {};
 
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+
     if (loginMode === 'register') {
-      endpoint = '/api/register.php';
+      endpoint = baseUrl + '/api/register.php';
       payload = { username: authUsername, password: authPassword, role: authRole };
     } else {
-      endpoint = '/api/login.php';
+      endpoint = baseUrl + '/api/login.php';
       if (loginMode === 'parent') {
         payload = { ic_number: authIcNumber };
       } else {
