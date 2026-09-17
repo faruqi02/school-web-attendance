@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       proxy: {
         '/api': {
-          target: env.BACKEND_URL || 'http://localhost:5000',
+          target: env.BACKEND_URL || 'http://localhost/school-web-attendance/backend',
           changeOrigin: true,
         },
       },

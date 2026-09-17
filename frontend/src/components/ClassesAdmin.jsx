@@ -139,11 +139,11 @@ export default function ClassesAdmin({ token, t }) {
                     justifyContent: 'space-between',
                     width: '100%',
                     padding: '14px 18px',
-                    background: selectedClassId === cls.id ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255, 255, 255, 0.02)',
+                    background: selectedClassId === cls.id ? 'var(--accent-glow)' : 'var(--bg-hover)',
                     border: '1px solid',
                     borderColor: selectedClassId === cls.id ? '#3b82f6' : 'var(--border-color)',
                     borderRadius: 'var(--border-radius-sm)',
-                    color: 'white',
+                    color: 'var(--text-primary)',
                     fontWeight: 600,
                     textAlign: 'left',
                     cursor: 'pointer',
@@ -181,7 +181,7 @@ export default function ClassesAdmin({ token, t }) {
                 border: '1px solid var(--border-color)',
                 fontSize: '13px'
               }}>
-                {t('rosterCount')}: <strong style={{ color: 'white' }}>{classStudents.length}</strong>.
+                {t('rosterCount')}: <strong style={{ color: 'var(--text-primary)' }}>{classStudents.length}</strong>.
               </div>
 
               <div className="table-container">

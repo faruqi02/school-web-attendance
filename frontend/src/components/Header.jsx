@@ -25,7 +25,7 @@ export default function Header({ username, role, token, t }) {
       justifyContent: 'space-between',
       padding: '16px 32px',
       borderBottom: '1px solid var(--border-color)',
-      background: 'rgba(15, 23, 42, 0.4)',
+      background: 'var(--bg-card)',
       backdropFilter: 'blur(12px)',
       position: 'sticky',
       top: 0,
@@ -64,7 +64,7 @@ export default function Header({ username, role, token, t }) {
         }}>
           <Shield size={14} style={{ color: '#3b82f6' }} />
           <span style={{ color: 'var(--text-secondary)' }}>{t('role')}:</span>
-          <span style={{ color: 'white' }}>{role}</span>
+          <span style={{ color: 'var(--text-primary)' }}>{role}</span>
         </div>
 
         {/* Profile Avatar icon wrapper */}

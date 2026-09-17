@@ -1,329 +1,243 @@
 import React, { useState, useEffect } from 'react';
-import { CalendarCheck, ListChecks, CalendarRange, CheckCircle, Search, Download } from 'lucide-react';
+import { Calendar, CheckCircle, XCircle, Clock, Save } from 'lucide-react';
 import FloatingAlert from './FloatingAlert';
 
 export default function AttendanceTeacher({ token, t }) {
   const [classes, setClasses] = useState([]);
-  const [selectedClassId, setSelectedClassId] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [academicYears, setAcademicYears] = useState([]);
   const [students, setStudents] = useState([]);
-  const [attendanceRecords, setAttendanceRecords] = useState({}); // { studentId: 'Present'/'Absent'/'Late' }
+  const [attendanceRecords, setAttendanceRecords] = useState({});
   
-  // Roster Monthly Report States
-  const [reportMonth, setReportMonth] = useState(new Date().toISOString().substring(0, 7)); // YYYY-MM
-  const [monthlyLogs, setMonthlyLogs] = useState([]);
-  const [generatingReport, setGeneratingReport] = useState(false);
-
+  const [selectedYear, setSelectedYear] = useState('');
+  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    fetchClasses();
+    fetchYearsAndClasses();
   }, []);
 
   useEffect(() => {
-    if (selectedClassId) {
-      fetchClassStudentsAndAttendance();
+    if (selectedYear && selectedClass && selectedDate) {
+      fetchStudentsAndAttendance();
     } else {
       setStudents([]);
       setAttendanceRecords({});
     }
-  }, [selectedClassId, date]);
+  }, [selectedYear, selectedClass, selectedDate]);
 
-  const fetchClasses = async () => {
+  const fetchYearsAndClasses = async () => {
     try {
-      const res = await fetch((import.meta.env.VITE_API_BASE_URL || '') + '/api/classes', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setClasses(data);
-        if (data.length > 0) setSelectedClassId(data[0].id);
-      }
+      const [yearRes, classRes] = await Promise.all([
+        fetch('/api/academic_years.php', { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch('/api/classes.php', { headers: { 'Authorization': `Bearer ${token}` } })
+      ]);
+      const years = await yearRes.json();
+      const cls = await classRes.json();
+      
+      setAcademicYears(years);
+      setClasses(cls);
+      
+      if (years.length > 0) setSelectedYear(years[0].id);
+      if (cls.length > 0) setSelectedClass(cls[0].id);
     } catch (err) {
       console.error(err);
     }
   };
 
-  const fetchClassStudentsAndAttendance = async () => {
-    setError('');
-    setSuccess('');
+  const fetchStudentsAndAttendance = async () => {
     try {
-      // 1. Fetch Students
-      const studentRes = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/classes/${selectedClassId}/students`, {
+      // Fetch students for this class and year
+      const stRes = await fetch(`/api/students.php?academic_year_id=${selectedYear}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (!studentRes.ok) throw new Error("Failed to load class students");
-      const studentData = await studentRes.json();
-      setStudents(studentData);
+      const allStudents = await stRes.json();
+      const classStudents = allStudents.filter(s => s.class_id == selectedClass);
+      setStudents(classStudents);
 
-      // 2. Fetch existing logs for class/date
-      const attRes = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/attendance/class/${selectedClassId}/date/${date}`, {
+      // Fetch attendance for this class, year, and date
+      const attRes = await fetch(`/api/attendance.php?academic_year_id=${selectedYear}&class_id=${selectedClass}&date=${selectedDate}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (attRes.ok) {
-        const attData = await attRes.json();
-        // Convert to map
-        const initialMap = {};
-        // Pre-fill present default
-        studentData.forEach(s => {
-          initialMap[s.id] = 'Present';
-        });
-        // Override with saved database records
-        attData.forEach(rec => {
-          initialMap[rec.student_id] = rec.status;
-        });
-        setAttendanceRecords(initialMap);
-      }
+      const attData = await attRes.json();
+      
+      // Map attendance to state
+      const records = {};
+      attData.forEach(att => {
+        records[att.student_id] = att.status;
+      });
+      setAttendanceRecords(records);
+      
     } catch (err) {
-      setError(err.message);
+      console.error(err);
     }
   };
 
   const handleStatusChange = (studentId, status) => {
-    setAttendanceRecords(prev => ({
-      ...prev,
+    setAttendanceRecords({
+      ...attendanceRecords,
       [studentId]: status
-    }));
+    });
   };
 
-  const handleSubmit = async () => {
+  const handleSave = async () => {
     setError('');
     setSuccess('');
-    
-    // Prepare records body
-    const records = Object.entries(attendanceRecords).map(([studentId, status]) => ({
-      student_id: parseInt(studentId),
-      status
+
+    const recordsToSave = students.map(student => ({
+      student_id: student.id,
+      class_id: selectedClass,
+      academic_year_id: selectedYear,
+      date: selectedDate,
+      status: attendanceRecords[student.id] || 'Present' // Default to present if untouched
     }));
 
-    if (records.length === 0) {
-      setError('No students mapped to commit records.');
+    if (recordsToSave.length === 0) {
+      setError('No students to save attendance for.');
       return;
     }
 
     try {
-      const res = await fetch((import.meta.env.VITE_API_BASE_URL || '') + '/api/attendance', {
+      const res = await fetch('/api/attendance.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          records,
-          class_id: parseInt(selectedClassId),
-          date
-        })
+        body: JSON.stringify({ records: recordsToSave })
       });
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Failed to submit attendance records');
+        throw new Error(data.error || 'Failed to save attendance');
       }
 
       setSuccess(t('successAttendance'));
-      fetchClassStudentsAndAttendance();
+      fetchStudentsAndAttendance();
     } catch (err) {
       setError(err.message);
     }
   };
 
-  // Monthly report trigger
-  const generateMonthlyReport = async () => {
-    if (!selectedClassId) return;
-    setGeneratingReport(true);
-    setMonthlyLogs([]);
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/attendance/report/class/${selectedClassId}/month/${reportMonth}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setMonthlyLogs(data);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setGeneratingReport(false);
-    }
-  };
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', position: 'relative' }}>
-      <div>
-        <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px' }}>
-          {t('attTracker')}
-        </h1>
-        <p style={{ color: 'var(--text-secondary)' }}>
-          {t('attTrackerDesc')}
-        </p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+        <div>
+          <h1 style={{ fontSize: '24px', fontWeight: '800' }}>{t('takeAttendance')}</h1>
+          <p style={{ color: 'var(--text-secondary)' }}>Log daily presence for your students</p>
+        </div>
       </div>
 
-      <FloatingAlert message={error} type="error" onClose={() => setError('')} />
-      <FloatingAlert message={success} type="success" onClose={() => setSuccess('')} />
+      {error && <FloatingAlert type="error" message={error} onClose={() => setError('')} />}
+      {success && <FloatingAlert type="success" message={success} onClose={() => setSuccess('')} />}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '32px' }}>
-        {/* Left Side: Logger interface */}
-        <div className="glass-card" style={{ height: 'fit-content' }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '24px', alignItems: 'flex-end' }}>
-            <div className="form-group" style={{ flex: 1, minWidth: '150px', marginBottom: 0 }}>
-              <label className="form-label">{t('selectClass')}</label>
-              <select 
-                className="form-select" 
-                value={selectedClassId} 
-                onChange={(e) => setSelectedClassId(e.target.value)}
-              >
-                {classes.map(cls => (
-                  <option key={cls.id} value={cls.id}>{cls.class_name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group" style={{ flex: 1, minWidth: '150px', marginBottom: 0 }}>
-              <label className="form-label">{t('date')}</label>
-              <input 
-                type="date" 
-                className="form-input" 
-                value={date} 
-                onChange={(e) => setDate(e.target.value)} 
-              />
-            </div>
-          </div>
-
-          <h3 style={{ fontSize: '16px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <ListChecks size={18} style={{ color: '#3b82f6' }} />
-            {t('attendanceRoster')}
-          </h3>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
-            {students.map(student => {
-              const currentStatus = attendanceRecords[student.id] || 'Present';
-              return (
-                <div 
-                  key={student.id} 
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '12px 16px',
-                    borderRadius: 'var(--border-radius-sm)',
-                    background: 'rgba(255, 255, 255, 0.02)',
-                    border: '1px solid var(--border-color)'
-                  }}
-                >
-                  <span style={{ fontWeight: '600' }}>{student.name}</span>
-                  
-                  {/* Selector Segmented Controls */}
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    {['Present', 'Absent', 'Late'].map(status => {
-                      const isActive = currentStatus === status;
-                      let badgeColor = 'var(--text-secondary)';
-                      if (isActive) {
-                        badgeColor = status === 'Present' ? 'var(--color-present)' : status === 'Absent' ? 'var(--color-absent)' : 'var(--color-late)';
-                      }
-                      return (
-                        <button
-                          key={status}
-                          onClick={() => handleStatusChange(student.id, status)}
-                          style={{
-                            padding: '6px 12px',
-                            borderRadius: '4px',
-                            border: '1px solid',
-                            borderColor: isActive ? badgeColor : 'var(--border-color)',
-                            background: isActive 
-                              ? (status === 'Present' ? 'var(--color-present-bg)' : status === 'Absent' ? 'var(--color-absent-bg)' : 'var(--color-late-bg)')
-                              : 'transparent',
-                            color: isActive ? badgeColor : 'var(--text-secondary)',
-                            fontWeight: '600',
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            transition: 'var(--transition)'
-                          }}
-                        >
-                          {t(status.toLowerCase())}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-
-            {students.length === 0 && (
-              <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '16px 0' }}>
-                No student profiles registered under this class level.
-              </p>
-            )}
-          </div>
-
-          {students.length > 0 && (
-            <button onClick={handleSubmit} className="btn btn-primary" style={{ width: '100%' }}>
-              <CheckCircle size={18} />
-              {t('saveAttendance')}
-            </button>
-          )}
+      <div className="glass-card" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <div className="form-group" style={{ flex: '1', minWidth: '150px' }}>
+          <label className="form-label">Academic Year</label>
+          <select className="form-select" value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)}>
+            {academicYears.map(year => <option key={year.id} value={year.id}>{year.year_name}</option>)}
+          </select>
+        </div>
+        
+        <div className="form-group" style={{ flex: '1', minWidth: '150px' }}>
+          <label className="form-label">{t('selectClass')}</label>
+          <select className="form-select" value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)}>
+            {classes.map(c => <option key={c.id} value={c.id}>{c.class_name}</option>)}
+          </select>
         </div>
 
-        {/* Right Side: Roster Monthly Report View */}
-        <div className="glass-card" style={{ height: 'fit-content' }}>
-          <h3 style={{ fontSize: '18px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <CalendarRange size={18} style={{ color: '#3b82f6' }} />
-            {t('monthlyReport')}
-          </h3>
+        <div className="form-group" style={{ flex: '1', minWidth: '150px' }}>
+          <label className="form-label">{t('dateLabel')}</label>
+          <input 
+            type="date" 
+            className="form-input" 
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+          />
+        </div>
 
-          <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', alignItems: 'flex-end' }}>
-            <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
-              <label className="form-label">{t('selectMonth')}</label>
-              <input 
-                type="month" 
-                className="form-input" 
-                value={reportMonth} 
-                onChange={(e) => setReportMonth(e.target.value)} 
-              />
-            </div>
-            <button 
-              onClick={generateMonthlyReport} 
-              className="btn btn-secondary" 
-              style={{ display: 'flex', gap: '8px' }}
-              disabled={generatingReport}
-            >
-              <Search size={16} />
-              {t('query')}
-            </button>
-          </div>
+        <div className="form-group">
+          <button onClick={handleSave} className="btn btn-primary" style={{ display: 'flex', gap: '8px' }}>
+            <Save size={18} />
+            {t('saveAttendance')}
+          </button>
+        </div>
+      </div>
 
-          {monthlyLogs.length > 0 ? (
-            <div className="table-container">
-              <table className="premium-table">
-                <thead>
-                  <tr>
-                    <th>{t('studentName')}</th>
-                    <th>{t('dateLogged')}</th>
-                    <th>{t('status')}</th>
+      <div className="glass-card">
+        <div className="table-container">
+          <table className="premium-table">
+            <thead>
+              <tr>
+                <th>IC Number</th>
+                <th>{t('nameLabel')}</th>
+                <th>{t('status')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {students.map(student => {
+                const currentStatus = attendanceRecords[student.id] || 'Present';
+                return (
+                  <tr key={student.id}>
+                    <td style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>{student.ic_number}</td>
+                    <td style={{ fontWeight: '500' }}>{student.name}</td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => handleStatusChange(student.id, 'Present')}
+                          className={`btn ${currentStatus === 'Present' ? 'btn-primary' : ''}`}
+                          style={{ 
+                            padding: '6px 12px', fontSize: '13px', 
+                            background: currentStatus === 'Present' ? '#10b981' : 'transparent',
+                            color: currentStatus === 'Present' ? 'white' : 'var(--text-secondary)',
+                            border: currentStatus === 'Present' ? 'none' : '1px solid var(--border-color)',
+                            display: 'flex', gap: '6px'
+                          }}
+                        >
+                          <CheckCircle size={14} /> {t('present')}
+                        </button>
+                        <button
+                          onClick={() => handleStatusChange(student.id, 'Absent')}
+                          className={`btn ${currentStatus === 'Absent' ? 'btn-primary' : ''}`}
+                          style={{ 
+                            padding: '6px 12px', fontSize: '13px', 
+                            background: currentStatus === 'Absent' ? '#ef4444' : 'transparent',
+                            color: currentStatus === 'Absent' ? 'white' : 'var(--text-secondary)',
+                            border: currentStatus === 'Absent' ? 'none' : '1px solid var(--border-color)',
+                            display: 'flex', gap: '6px'
+                          }}
+                        >
+                          <XCircle size={14} /> {t('absent')}
+                        </button>
+                        <button
+                          onClick={() => handleStatusChange(student.id, 'Late')}
+                          className={`btn ${currentStatus === 'Late' ? 'btn-primary' : ''}`}
+                          style={{ 
+                            padding: '6px 12px', fontSize: '13px', 
+                            background: currentStatus === 'Late' ? '#f59e0b' : 'transparent',
+                            color: currentStatus === 'Late' ? 'white' : 'var(--text-secondary)',
+                            border: currentStatus === 'Late' ? 'none' : '1px solid var(--border-color)',
+                            display: 'flex', gap: '6px'
+                          }}
+                        >
+                          <Clock size={14} /> {t('late')}
+                        </button>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {monthlyLogs.map((log, idx) => (
-                    <tr key={idx}>
-                      <td style={{ fontWeight: '600' }}>{log.student_name}</td>
-                      <td style={{ color: 'var(--text-secondary)' }}>{log.date}</td>
-                      <td>
-                        <span className={`badge ${
-                          log.status === 'Present' ? 'badge-present' : log.status === 'Absent' ? 'badge-absent' : 'badge-late'
-                        }`}>
-                          {t(log.status.toLowerCase())}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-secondary)' }}>
-              {generatingReport ? 'Loading report logs...' : t('queryMonthlyData')}
-            </div>
-          )}
+                );
+              })}
+              {students.length === 0 && (
+                <tr>
+                  <td colSpan="3" style={{ textAlign: 'center', padding: '32px', color: 'var(--text-secondary)' }}>
+                    {t('noStudentsInClass')}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

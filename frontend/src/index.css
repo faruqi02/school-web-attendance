@@ -1,17 +1,21 @@
 /* Premium Design System & Stylesheet */
 
 :root {
-  /* Dynamic harmonious HSL Color Palette */
-  --bg-primary: #0b0f19;
-  --bg-secondary: #131b2e;
-  --bg-card: rgba(30, 41, 59, 0.4);
-  --border-color: rgba(255, 255, 255, 0.08);
-  --accent-color: #3b82f6;
-  --accent-glow: rgba(59, 130, 246, 0.35);
+  /* Light Mode Palette */
+  --bg-primary: #f1f5f9;
+  --bg-secondary: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --border-color: rgba(0, 0, 0, 0.1);
+  --accent-color: #2563eb;
+  --accent-glow: rgba(37, 99, 235, 0.2);
   
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
   --text-muted: #64748b;
+  
+  --bg-hover: rgba(0, 0, 0, 0.05);
+  --bg-surface: #f1f5f9;
+  --bg-overlay: rgba(255, 255, 255, 0.65);
   
   /* Status Colors */
   --color-present: #10b981;
@@ -26,6 +30,24 @@
   --border-radius-md: 16px;
   --border-radius-lg: 24px;
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark {
+  /* Dark Mode Palette */
+  --bg-primary: #0b0f19;
+  --bg-secondary: #131b2e;
+  --bg-card: rgba(30, 41, 59, 0.4);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --accent-color: #3b82f6;
+  --accent-glow: rgba(59, 130, 246, 0.35);
+  
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  --bg-surface: rgba(15, 23, 42, 0.6);
+  --bg-overlay: rgba(11, 15, 25, 0.65);
 }
 
 /* Base Styles */
@@ -87,7 +109,7 @@ body {
   flex-direction: column;
   height: 100vh;
   overflow-y: auto;
-  background: linear-gradient(135deg, var(--bg-primary) 0%, #0d1527 100%);
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
 }
 
 .page-body {
@@ -187,7 +209,7 @@ h1, h2, h3, h4, h5 {
 }
 
 .form-input, .form-select, .form-textarea {
-  background: rgba(15, 23, 42, 0.6);
+  background: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-sm);
   padding: 12px 16px;
@@ -200,7 +222,7 @@ h1, h2, h3, h4, h5 {
 
 .form-input:focus, .form-select:focus, .form-textarea:focus {
   border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
 /* Premium Tables */
@@ -218,7 +240,7 @@ h1, h2, h3, h4, h5 {
 }
 
 .premium-table th {
-  background: rgba(15, 23, 42, 0.8);
+  background: var(--bg-secondary);
   padding: 16px;
   font-weight: 600;
   color: var(--text-secondary);
@@ -229,7 +251,7 @@ h1, h2, h3, h4, h5 {
   padding: 16px;
   border-bottom: 1px solid var(--border-color);
   color: var(--text-primary);
-  background: rgba(20, 28, 47, 0.2);
+  background: var(--bg-card);
 }
 
 .premium-table tr:last-child td {
@@ -310,8 +332,12 @@ h1, h2, h3, h4, h5 {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: linear-gradient(rgba(11, 15, 25, 0.85), rgba(11, 15, 25, 0.85)),
-              url('./images/background.jpg') no-repeat center center / cover;
+  background-color: var(--bg-primary);
+  background-image: linear-gradient(var(--bg-overlay), var(--bg-overlay)),
+                    url('./images/background.jpg');
+  background-size: cover;
+  background-position: center;
+  background-blend-mode: normal;
   padding: 20px;
 }
 

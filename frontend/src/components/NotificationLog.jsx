@@ -59,7 +59,7 @@ export default function NotificationLog({ token, t }) {
             <div 
               key={log.id} 
               style={{
-                background: 'rgba(15, 23, 42, 0.6)',
+                background: 'var(--bg-surface)',
                 border: '1px solid var(--border-color)',
                 borderRadius: 'var(--border-radius-sm)',
                 padding: '20px',
@@ -79,7 +79,7 @@ export default function NotificationLog({ token, t }) {
               </div>
               
               <div>
-                <h4 style={{ fontSize: '14px', color: 'white', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <h4 style={{ fontSize: '14px', color: 'var(--text-primary)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Send size={12} style={{ color: 'var(--color-present)' }} />
                   {t('subjectPrefix')}: {log.subject}
                 </h4>
@@ -90,7 +90,7 @@ export default function NotificationLog({ token, t }) {
                   lineHeight: 1.6,
                   padding: '12px',
                   borderRadius: '4px',
-                  background: 'rgba(255, 255, 255, 0.01)'
+                  background: 'var(--bg-hover)'
                 }}>
                   {log.textContent}
                 </p>

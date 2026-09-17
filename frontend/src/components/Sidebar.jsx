@@ -44,7 +44,7 @@ export default function Sidebar({ role, activeTab, setActiveTab, handleLogout, t
   return (
     <aside style={{
       width: isCollapsed ? '80px' : '260px',
-      background: 'rgba(11, 15, 25, 0.95)',
+      background: 'var(--bg-card)',
       borderRight: '1px solid var(--border-color)',
       display: 'flex',
       flexDirection: 'column',
@@ -94,8 +94,8 @@ export default function Sidebar({ role, activeTab, setActiveTab, handleLogout, t
                 padding: '12px 16px',
                 borderRadius: 'var(--border-radius-sm)',
                 border: 'none',
-                background: isActive ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
-                color: isActive ? 'white' : 'var(--text-secondary)',
+                background: isActive ? 'var(--accent-glow)' : 'transparent',
+                color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
                 fontWeight: isActive ? '600' : '500',
                 fontSize: '14px',
                 cursor: 'pointer',
@@ -103,7 +103,7 @@ export default function Sidebar({ role, activeTab, setActiveTab, handleLogout, t
               }}
               className={isActive ? '' : 'sidebar-btn-hover'}
             >
-              <Icon size={18} style={{ color: isActive ? '#3b82f6' : 'inherit', minWidth: '18px' }} />
+              <Icon size={18} style={{ color: isActive ? 'var(--accent-color)' : 'inherit', minWidth: '18px' }} />
               {!isCollapsed && <span style={{ whiteSpace: 'nowrap' }}>{item.label}</span>}
             </button>
           );
@@ -149,7 +149,7 @@ export default function Sidebar({ role, activeTab, setActiveTab, handleLogout, t
             padding: '12px 16px',
             borderRadius: 'var(--border-radius-sm)',
             border: 'none',
-            background: 'rgba(239, 68, 68, 0.05)',
+            background: 'var(--color-absent-bg)',
             color: 'var(--color-absent)',
             fontWeight: '600',
             fontSize: '14px',
@@ -166,11 +166,11 @@ export default function Sidebar({ role, activeTab, setActiveTab, handleLogout, t
       {/* Sidebar inline helper styling */}
       <style>{`
         .sidebar-btn-hover:hover {
-          background: rgba(255, 255, 255, 0.03) !important;
-          color: white !important;
+          background: var(--bg-hover) !important;
+          color: var(--text-primary) !important;
         }
         .logout-btn-hover:hover {
-          background: #ef4444 !important;
+          background: var(--color-absent) !important;
           color: white !important;
         }
       `}</style>

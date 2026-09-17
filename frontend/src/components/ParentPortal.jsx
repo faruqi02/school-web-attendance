@@ -7,14 +7,42 @@ export default function ParentPortal({ token, t }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  const [academicYears, setAcademicYears] = useState([]);
+  const [selectedYear, setSelectedYear] = useState('');
 
   useEffect(() => {
-    fetchChildData();
+    fetchYears();
   }, []);
 
-  const fetchChildData = async () => {
+  useEffect(() => {
+    if (selectedYear) {
+      fetchChildData(selectedYear);
+    }
+  }, [selectedYear]);
+
+  const fetchYears = async () => {
     try {
-      const res = await fetch((import.meta.env.VITE_API_BASE_URL || '') + '/api/parent/child', {
+      const res = await fetch('/api/academic_years.php', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const years = await res.json();
+      setAcademicYears(years);
+      if (years.length > 0) {
+        setSelectedYear(years[0].id); // Default to most recent year
+      } else {
+        setLoading(false);
+      }
+    } catch (err) {
+      setError('Failed to fetch academic years.');
+      setLoading(false);
+    }
+  };
+
+  const fetchChildData = async (yearId) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/parent_child.php?academic_year_id=${yearId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const resData = await res.json();
@@ -33,7 +61,7 @@ export default function ParentPortal({ token, t }) {
     window.print();
   };
 
-  if (loading) {
+  if (loading && !data) {
     return <p style={{ color: 'var(--text-secondary)' }}>{t('loading')}</p>;
   }
 
@@ -67,10 +95,22 @@ export default function ParentPortal({ token, t }) {
           </p>
         </div>
 
-        <button onClick={handlePrint} className="btn btn-primary" style={{ display: 'flex', gap: '8px' }}>
-          <Printer size={16} />
-          {t('printSlip')}
-        </button>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <select 
+            value={selectedYear} 
+            onChange={(e) => setSelectedYear(e.target.value)}
+            className="form-select"
+            style={{ minWidth: '150px' }}
+          >
+            {academicYears.map(year => (
+              <option key={year.id} value={year.id}>{year.year_name}</option>
+            ))}
+          </select>
+          <button onClick={handlePrint} className="btn btn-primary" style={{ display: 'flex', gap: '8px' }}>
+            <Printer size={16} />
+            {t('printSlip')}
+          </button>
+        </div>
       </div>
 
       {/* Grid: Child summary & Ranks */}

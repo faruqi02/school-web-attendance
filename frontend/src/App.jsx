@@ -9,7 +9,7 @@ import ResultsTeacher from './components/ResultsTeacher';
 import ParentPortal from './components/ParentPortal';
 import AcademicSchedule from './components/AcademicSchedule';
 import NotificationLog from './components/NotificationLog';
-import { LogIn, UserPlus, GraduationCap, Lock, User } from 'lucide-react';
+import { LogIn, UserPlus, GraduationCap, Lock, User, Sun, Moon } from 'lucide-react';
 
 import schoolLogo from './images/school-logo.png';
 import { translations } from './utils/i18n';
@@ -23,10 +23,27 @@ export default function App() {
   // Language Localization State (Defaults to Bahasa Melayu 'ms')
   const [lang, setLang] = useState(localStorage.getItem('lang') || 'ms');
   
+  // Theme State
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved) return saved;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('theme', theme);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
+
   // Auth Form State
-  const [isRegister, setIsRegister] = useState(false);
+  const [loginMode, setLoginMode] = useState('parent'); // 'parent', 'staff', 'register'
   const [authUsername, setAuthUsername] = useState('');
   const [authPassword, setAuthPassword] = useState('');
+  const [authIcNumber, setAuthIcNumber] = useState('');
   const [authRole, setAuthRole] = useState('Teacher'); // Default registration role choice
   const [authError, setAuthError] = useState('');
   const [authSuccess, setAuthSuccess] = useState('');
@@ -64,10 +81,20 @@ export default function App() {
     setAuthError('');
     setAuthSuccess('');
     
-    const endpoint = isRegister ? '/api/auth/register' : '/api/auth/login';
-    const payload = isRegister 
-      ? { username: authUsername, password: authPassword, role: authRole }
-      : { username: authUsername, password: authPassword };
+    let endpoint = '';
+    let payload = {};
+
+    if (loginMode === 'register') {
+      endpoint = '/api/register.php';
+      payload = { username: authUsername, password: authPassword, role: authRole };
+    } else {
+      endpoint = '/api/login.php';
+      if (loginMode === 'parent') {
+        payload = { ic_number: authIcNumber };
+      } else {
+        payload = { username: authUsername, password: authPassword };
+      }
+    }
 
     try {
       const response = await fetch(endpoint, {
@@ -81,16 +108,21 @@ export default function App() {
         throw new Error(data.error || 'Authentication failed');
       }
 
-      if (isRegister) {
+      if (loginMode === 'register') {
         setAuthSuccess(t('regSuccess'));
-        setIsRegister(false);
+        setLoginMode('staff');
         setAuthPassword('');
       } else {
         setToken(data.token);
         setRole(data.role);
         setUsername(data.username);
+        // Also save student_id for Parent
+        if (data.student_id) {
+          localStorage.setItem('student_id', data.student_id);
+        }
         setAuthUsername('');
         setAuthPassword('');
+        setAuthIcNumber('');
       }
     } catch (err) {
       setAuthError(err.message);
@@ -130,7 +162,6 @@ export default function App() {
   if (!token) {
     return (
       <div className="auth-wrapper">
-        {/* Floating Language Switcher Selector */}
         <div style={{
           position: 'fixed',
           top: '24px',
@@ -142,8 +173,28 @@ export default function App() {
           padding: '4px',
           borderRadius: 'var(--border-radius-sm)',
           border: '1px solid var(--border-color)',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.4)'
+          boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+          alignItems: 'center'
         }}>
+          <button 
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} 
+            style={{
+              padding: '6px',
+              borderRadius: '4px',
+              border: 'none',
+              background: 'transparent',
+              color: 'var(--text-primary)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'var(--transition)'
+            }}
+            title="Toggle Theme"
+          >
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
+          <div style={{ width: '1px', height: '16px', background: 'var(--border-color)', margin: '0 4px' }}></div>
           <button 
             onClick={() => setLang('ms')} 
             style={{
@@ -151,7 +202,7 @@ export default function App() {
               borderRadius: '4px',
               border: 'none',
               background: lang === 'ms' ? 'var(--accent-color)' : 'transparent',
-              color: 'white',
+              color: lang === 'ms' ? 'white' : 'var(--text-primary)',
               fontWeight: '700',
               cursor: 'pointer',
               fontSize: '11px',
@@ -167,7 +218,7 @@ export default function App() {
               borderRadius: '4px',
               border: 'none',
               background: lang === 'en' ? 'var(--accent-color)' : 'transparent',
-              color: 'white',
+              color: lang === 'en' ? 'white' : 'var(--text-primary)',
               fontWeight: '700',
               cursor: 'pointer',
               fontSize: '11px',
@@ -199,16 +250,22 @@ export default function App() {
 
           <div className="tabs">
             <button 
-              className={`tab-btn ${!isRegister ? 'active' : ''}`}
-              onClick={() => { setIsRegister(false); setAuthError(''); setAuthSuccess(''); }}
+              className={`tab-btn ${loginMode === 'parent' ? 'active' : ''}`}
+              onClick={() => { setLoginMode('parent'); setAuthError(''); setAuthSuccess(''); }}
             >
-              {t('signIn')}
+              Parent Login
             </button>
             <button 
-              className={`tab-btn ${isRegister ? 'active' : ''}`}
-              onClick={() => { setIsRegister(true); setAuthError(''); setAuthSuccess(''); }}
+              className={`tab-btn ${loginMode === 'staff' ? 'active' : ''}`}
+              onClick={() => { setLoginMode('staff'); setAuthError(''); setAuthSuccess(''); }}
             >
-              {t('signUp')}
+              Staff Login
+            </button>
+            <button 
+              className={`tab-btn ${loginMode === 'register' ? 'active' : ''}`}
+              onClick={() => { setLoginMode('register'); setAuthError(''); setAuthSuccess(''); }}
+            >
+              Staff Register
             </button>
           </div>
 
@@ -241,56 +298,78 @@ export default function App() {
           )}
 
           <form onSubmit={handleAuthSubmit}>
-            <div className="form-group">
-              <label className="form-label">{t('username')}</label>
-              <div style={{ position: 'relative' }}>
-                <User size={18} style={{ position: 'absolute', left: '14px', top: '14px', color: 'var(--text-muted)' }} />
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  style={{ width: '100%', paddingLeft: '44px' }} 
-                  placeholder={t('enterUsername')}
-                  value={authUsername}
-                  onChange={(e) => setAuthUsername(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">{t('password')}</label>
-              <div style={{ position: 'relative' }}>
-                <Lock size={18} style={{ position: 'absolute', left: '14px', top: '14px', color: 'var(--text-muted)' }} />
-                <input 
-                  type="password" 
-                  className="form-input" 
-                  style={{ width: '100%', paddingLeft: '44px' }} 
-                  placeholder="••••••••"
-                  value={authPassword}
-                  onChange={(e) => setAuthPassword(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            {isRegister && (
+            {loginMode === 'parent' ? (
               <div className="form-group">
-                <label className="form-label">{t('systemRole')}</label>
-                <select 
-                  className="form-select"
-                  value={authRole}
-                  onChange={(e) => setAuthRole(e.target.value)}
-                >
-                  <option value="Teacher">Teacher</option>
-                  <option value="Parent">Parent</option>
-                  <option value="Administrator">Administrator</option>
-                </select>
+                <label className="form-label">Student IC / MyKid Number</label>
+                <div style={{ position: 'relative' }}>
+                  <User size={18} style={{ position: 'absolute', left: '14px', top: '14px', color: 'var(--text-muted)' }} />
+                  <input 
+                    type="text" 
+                    className="form-input" 
+                    style={{ width: '100%', paddingLeft: '44px' }} 
+                    placeholder="Enter Student IC"
+                    value={authIcNumber}
+                    onChange={(e) => setAuthIcNumber(e.target.value)}
+                    required
+                  />
+                </div>
+                <small style={{ color: 'var(--text-muted)', fontSize: '11px', marginTop: '4px', display: 'block' }}>
+                  (example: 991201020899, without dash (-))
+                </small>
               </div>
+            ) : (
+              <>
+                <div className="form-group">
+                  <label className="form-label">{t('username')}</label>
+                  <div style={{ position: 'relative' }}>
+                    <User size={18} style={{ position: 'absolute', left: '14px', top: '14px', color: 'var(--text-muted)' }} />
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      style={{ width: '100%', paddingLeft: '44px' }} 
+                      placeholder={t('enterUsername')}
+                      value={authUsername}
+                      onChange={(e) => setAuthUsername(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">{t('password')}</label>
+                  <div style={{ position: 'relative' }}>
+                    <Lock size={18} style={{ position: 'absolute', left: '14px', top: '14px', color: 'var(--text-muted)' }} />
+                    <input 
+                      type="password" 
+                      className="form-input" 
+                      style={{ width: '100%', paddingLeft: '44px' }} 
+                      placeholder="••••••••"
+                      value={authPassword}
+                      onChange={(e) => setAuthPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                {loginMode === 'register' && (
+                  <div className="form-group">
+                    <label className="form-label">{t('systemRole')}</label>
+                    <select 
+                      className="form-select"
+                      value={authRole}
+                      onChange={(e) => setAuthRole(e.target.value)}
+                    >
+                      <option value="Teacher">Teacher</option>
+                      <option value="Administrator">Administrator</option>
+                    </select>
+                  </div>
+                )}
+              </>
             )}
 
             <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '12px', marginTop: '12px' }}>
-              {isRegister ? <UserPlus size={18} /> : <LogIn size={18} />}
-              {isRegister ? t('signUp') : t('signIn')}
+              {loginMode === 'register' ? <UserPlus size={18} /> : <LogIn size={18} />}
+              {loginMode === 'register' ? t('signUp') : (loginMode === 'parent' ? 'Login as Parent' : t('signIn'))}
             </button>
           </form>
         </div>
@@ -301,7 +380,6 @@ export default function App() {
   // Dashboard Layout
   return (
     <div className="app-container">
-      {/* Floating Language Switcher Selector */}
       <div style={{
         position: 'fixed',
         bottom: '24px',
@@ -313,8 +391,28 @@ export default function App() {
         padding: '4px',
         borderRadius: 'var(--border-radius-sm)',
         border: '1px solid var(--border-color)',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.4)'
+        boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+        alignItems: 'center'
       }}>
+        <button 
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} 
+          style={{
+            padding: '6px',
+            borderRadius: '4px',
+            border: 'none',
+            background: 'transparent',
+            color: 'var(--text-primary)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'var(--transition)'
+          }}
+          title="Toggle Theme"
+        >
+          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+        </button>
+        <div style={{ width: '1px', height: '16px', background: 'var(--border-color)', margin: '0 4px' }}></div>
         <button 
           onClick={() => setLang('ms')} 
           style={{
@@ -322,7 +420,7 @@ export default function App() {
             borderRadius: '4px',
             border: 'none',
             background: lang === 'ms' ? 'var(--accent-color)' : 'transparent',
-            color: 'white',
+            color: lang === 'ms' ? 'white' : 'var(--text-primary)',
             fontWeight: '700',
             cursor: 'pointer',
             fontSize: '11px',
@@ -338,7 +436,7 @@ export default function App() {
             borderRadius: '4px',
             border: 'none',
             background: lang === 'en' ? 'var(--accent-color)' : 'transparent',
-            color: 'white',
+            color: lang === 'en' ? 'white' : 'var(--text-primary)',
             fontWeight: '700',
             cursor: 'pointer',
             fontSize: '11px',

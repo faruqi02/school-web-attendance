@@ -26,7 +26,7 @@ export default function Dashboard({ token, role, setActiveTab, t }) {
   const fetchStats = async () => {
     try {
       // Fetch stats
-      const statsRes = await fetch((import.meta.env.VITE_API_BASE_URL || '') + '/api/dashboard/stats', {
+      const statsRes = await fetch('/api/dashboard_stats.php', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (statsRes.ok) {
@@ -35,7 +35,7 @@ export default function Dashboard({ token, role, setActiveTab, t }) {
       }
 
       // Fetch schedule tasks count
-      const schedRes = await fetch((import.meta.env.VITE_API_BASE_URL || '') + '/api/schedule', {
+      const schedRes = await fetch('/api/schedule.php', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (schedRes.ok) {
@@ -118,7 +118,7 @@ export default function Dashboard({ token, role, setActiveTab, t }) {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px', position: 'relative' }}>
             {/* SVG Custom Circular Progress */}
             <svg width="160" height="160" viewBox="0 0 160 160">
-              <circle cx="80" cy="80" r="70" fill="transparent" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="12" />
+              <circle cx="80" cy="80" r="70" fill="transparent" stroke="var(--border-color)" strokeWidth="12" />
               <circle 
                 cx="80" 
                 cy="80" 
